@@ -3,10 +3,11 @@ import pickle
 import os.path
 import os
 import io
+import json
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload, MediaIoBaseUpload
 
 
 class MyDrive:
@@ -34,7 +35,8 @@ class MyDrive:
                 pickle.dump(creds, token)
 
         self.service = build('drive', 'v3', credentials=creds)
-        self.main_folder_id = self.cratate_main_folder()
+        self.main_folder_id = self.create_main_folder()
+        self.table_list = {}
 
     def create_folder(self, name):
         folder_id = self.main_folder_id
@@ -45,9 +47,12 @@ class MyDrive:
         }
         file = self.service.files().create(body=file_metadata,
                                            fields='id, name').execute()
-        return file.get('name')
+        file_name = file.get('name')
+        file_id = file.get('id')
+        self.table_list.update({file_name: file_id})
+        return file_name
 
-    def cratate_main_folder(self):
+    def create_main_folder(self):
         if check := self.check_if_main_folder():
             return check
         file_metadata = {
@@ -58,10 +63,10 @@ class MyDrive:
                                            fields='id').execute()
         return file.get('id')
 
-    def check_if_main_folder(self):
+    def check_folder(self, name='db'):
         page_token = None
         while True:
-            response = self.service.files().list(q="fullText contains 'db'",
+            response = self.service.files().list(q=f"fullText contains {name}",
                                                  spaces='drive',
                                                  fields='nextPageToken, files(id, name)',
                                                  pageToken=page_token).execute()
@@ -73,10 +78,36 @@ class MyDrive:
                 break
         return False
 
+    def get_file(self, file_id):
+        '''Read Json obj'''
+        request = self.service.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+        
+        fh.seek(0)
+        file = fh.read()
+        fh.close()
+
+        return file
+
+    def create_file(self, file):
+        file_metadata = {'name': 'photo.jpg'}
+        # media = MediaFileUpload(file, mimetype='image/jpeg')
+        media = MediaIoBaseUpload(file, mimetype='image/jpeg')
+        file = self.service.files().create(body=file_metadata,
+                                            media_body=media,
+                                            fields='id').execute()
+        return file
+
 
 def main():
     my_drive = MyDrive()
-    print(my_drive.create_folder('adwasdd'))
+    print(my_drive.get_file('1YUNp3m-VEm0IcOJJ8-2EbZI0YWVS3UXd'))
+    file = io.BytesIO(b'asdasd')
+    my_drive.create_file(file)
     
 
 if __name__ == '__main__':
