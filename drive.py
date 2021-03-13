@@ -42,21 +42,22 @@ class MyDrive:
         self.service = build('drive', 'v3', credentials=creds)
         self.main_folder_id = self.create_main_folder()
 
-    def create_folder(self, name):
-        folder_id = self.main_folder_id
+    def create_folder(self, name, parent=None):
+        folder_id = self.main_folder_id if not parent else parent
         file_metadata = {
             'name': name,
             'parents': [folder_id],
             'mimeType': 'application/vnd.google-apps.folder'
         }
-        file = self.service.files().create(body=file_metadata,
+        folder = self.service.files().create(body=file_metadata,
                                            fields='id, name').execute()
-        file_name = file.get('name')
-        file_id = file.get('id')
-        return file_name
+        folder_name = folder.get('name')
+        folder_id = folder.get('id')
+        return folder_id
 
     def create_main_folder(self):
-        if check := self.check_main_folder():
+        check = self.check_main_folder()
+        if check:
             return check
         file_metadata = {
             'name': 'db',
@@ -69,10 +70,12 @@ class MyDrive:
     def check_main_folder(self, name='db'):
         page_token = None
         while True:
-            response = self.service.files().list(q=f"fullText contains '{name}'",
-                                                 spaces='drive',
-                                                 fields='nextPageToken, files(id, name)',
-                                                 pageToken=page_token).execute()
+            response = self.service.files().list(
+                q=f"fullText contains '{name}'",
+                spaces='drive',
+                fields='nextPageToken, files(id, name)',
+                pageToken=page_token
+            ).execute()
             for file in response.get('files', []):
                 if file.get('name') == name:
                     return file.get('id')
@@ -117,14 +120,42 @@ class MyDrive:
         json_obj = self.get_file(file_id)
         return json.load(json_obj)
 
-    def create_file(self, file):
-        file_metadata = {'name': 'photo.jpg'}
+    def create_file(self, file, type, parent=None):
+        if parent:
+            file_metadata = {
+                'name': 'photo.jpg',
+                'parents': [parent]
+            }
+        else:
+            file_metadata = {
+                'name': 'photo.jpg',
+            }
+
         # media = MediaFileUpload(file, mimetype='image/jpeg')
-        media = MediaIoBaseUpload(file, mimetype='image/jpeg')
-        file = self.service.files().create(body=file_metadata,
-                                            media_body=media,
-                                            fields='id').execute()
+        fh = io.BytesIO(file)
+        if type == file_types['image']:
+            media = MediaIoBaseUpload(fh, mimetype=file_types['image'])
+            file_metadata['name'] = 'preview'
+        if type == file_types['json']:
+            media = MediaIoBaseUpload(fh, mimetype=file_types['json'])
+            file_metadata['name'] = 'json'
+
+        file = self.service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id',
+        ).execute()
         return file
+    
+    def update_file(self, file_id, new_file):
+        file = self.service.files().get(fileId=file_id).execute()
+        media = MediaIoBaseUpload(file, file['mimeType'])
+        updated_file = self.service.files().update(
+            fileId=file_id,
+            body=file,
+            media_body=media
+        ).execute()
+        return updated_file
 
     def list_folder(self, folder_id, page_size=10):
         # Call the Drive v3 API
@@ -137,6 +168,7 @@ class MyDrive:
 
         if not items:
             print('No files found.')
+            return obj
         else:
             print('Files:')
             for item in items:
@@ -145,43 +177,8 @@ class MyDrive:
         return obj
 
 
-class DriveApi(MyDrive):
-    def get_all(self, folder_name):
-        parent = self.check_folder(folder_name)
-        self.list_folder(parent)
-
-    def get(self, id):
-        obj = {
-            'json': '',
-            'image': ''
-        }
-        files = self.list_folder(id)
-        print(files)
-        for file in files:
-            file_id = file['id']
-            if file['type'] == file_types['json']:
-                json = self.get_json(file_id)
-                obj['json'] = json
-            if file['type'] == file_types['image']:
-                obj['image'] = file_id
-        print(obj)
-        return obj
-
-    def update(self, id):
-        pass
-
-    def delete(self, id):
-        pass
-
-
 def main():
-    my_drive = DriveApi()
-    # print(my_drive.get_file('1YUNp3m-VEm0IcOJJ8-2EbZI0YWVS3UXd'))
-    # file = io.BytesIO(b'asdasd')
-    # my_drive.create_file(file)
-    my_drive.get_all('projects')
-    my_drive.get('1x-B_D8MyZEEVr8qLbHUx8fpmcvE2eNiI')
-    
+   print('main') 
 
 if __name__ == '__main__':
     main()
