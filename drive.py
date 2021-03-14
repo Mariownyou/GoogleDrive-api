@@ -123,12 +123,12 @@ class MyDrive:
     def create_file(self, file, type, parent=None):
         if parent:
             file_metadata = {
-                'name': 'photo.jpg',
+                'name': 'file',
                 'parents': [parent]
             }
         else:
             file_metadata = {
-                'name': 'photo.jpg',
+                'name': 'file',
             }
 
         # media = MediaFileUpload(file, mimetype='image/jpeg')
@@ -149,10 +149,12 @@ class MyDrive:
     
     def update_file(self, file_id, new_file):
         file = self.service.files().get(fileId=file_id).execute()
-        media = MediaIoBaseUpload(file, file['mimeType'])
+
+        fh = io.BytesIO(new_file)
+        media = MediaIoBaseUpload(fh, file['mimeType'])
+        print(file['mimeType'], file['name'])
         updated_file = self.service.files().update(
             fileId=file_id,
-            body=file,
             media_body=media
         ).execute()
         return updated_file
@@ -176,9 +178,19 @@ class MyDrive:
                 print(u'{0} {1}'.format(item['mimeType'], item['id'])) 
         return obj
 
+    def check_folder_by_id(self, folder_id):
+        try:
+            result = self.service.files().get(fileId=folder_id).execute()
+        except:
+            result = False
+        return result
+
 
 def main():
-   print('main') 
+   drive = MyDrive()
+   folder = drive.check_folder_by_id('1DIUAwMjgXsrvJ3EU07cLCXv_Tgyug4kv')
+   folder_2 = drive.check_folder_by_id('asdasd')
+   print(folder, folder_2)
 
 if __name__ == '__main__':
     main()

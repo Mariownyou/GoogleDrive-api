@@ -31,9 +31,27 @@ class DriveApi(MyDrive):
         folder_id = self.create_folder('rocket', parent)
         for file in files:
             self.create_file(file['file'], file['mimeType'], folder_id)
+        return folder_id
 
-    def update(self, id):
-        pass
+    def update(self, data, folder_id):
+        folder = self.check_folder_by_id(folder_id)
+        if folder == False:
+            return 'folder not found'
+        files = self.list_folder(folder_id)
+        print(files)
+        for file in files:
+            file_id = file['id']
+            if file['type'] == file_types['json']:
+                try:
+                    self.update_file(file_id, data['json'])
+                except:
+                    print('not found json')
+            if file['type'] == file_types['image']:
+                try:
+                    self.update_file(file_id, data['image'])
+                except:
+                    print('not found image')
+        return 'updated'
 
     def delete(self, id):
         pass
