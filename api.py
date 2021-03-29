@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from drive_api import DriveApi
 from flask_cors import cross_origin
 
@@ -20,7 +20,7 @@ def folder(folder):
         files = drive.get_all(folder)
         if len(files) == 0:
             return '<h1>Empty folder</h1>'
-        return list(files)
+        return jsonify(files)
     if request.method == 'POST':
         img = request.files.get('image')
         json = request.files.get('json')
