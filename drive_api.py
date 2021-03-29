@@ -63,13 +63,13 @@ def main():
     # print(my_drive.get_file('1YUNp3m-VEm0IcOJJ8-2EbZI0YWVS3UXd'))
     # file = io.BytesIO(b'asdasd')
     # my_drive.create_file(file)
-    my_drive.get_all('projects')
-    my_drive.get('1x-B_D8MyZEEVr8qLbHUx8fpmcvE2eNiI')
-    file = {
-        'file': io.StringIO('asdasdasd'),
-        'mimeType': 'application/json'
-    }
-    my_drive.create([file], 'new')
+    my_drive.get_all('photos')
+    # my_drive.get('1x-B_D8MyZEEVr8qLbHUx8fpmcvE2eNiI')
+    # file = {
+    #     'file': io.StringIO('asdasdasd'),
+    #     'mimeType': 'application/json'
+    # }
+    # my_drive.create([file], 'new')
     
 
 if __name__ == '__main__':

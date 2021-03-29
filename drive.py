@@ -159,11 +159,10 @@ class MyDrive:
         ).execute()
         return updated_file
 
-    def list_folder(self, folder_id, page_size=10):
+    def list_folder(self, folder_id, page_size=100):
         # Call the Drive v3 API
         results = self.service.files().list(
             q = f"'{folder_id}' in parents",
-            pageSize=page_size, 
             fields="nextPageToken, files(id, name, mimeType)").execute()
         items = results.get('files', [])
         obj = []
