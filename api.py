@@ -1,23 +1,26 @@
 from flask import Flask, request
 from drive_api import DriveApi
+from flask_cors import cross_origin
 
 app = Flask(__name__)
-app.debug = False 
+app.debug = False
 drive = DriveApi()
 
 @app.route('/')
+@cross_origin()
 def hello_world():
     files = drive.get_all('projects')
     print(files)
     return files[0]
 
 @app.route('/<folder>', methods = ['GET', 'POST', 'PUT'])
+@cross_origin()
 def folder(folder):
     if request.method == 'GET':
         files = drive.get_all(folder)
         if len(files) == 0:
             return '<h1>Empty folder</h1>'
-        return f'<pre>{files}</pre>'
+        return files
     if request.method == 'POST':
         img = request.files.get('image')
         json = request.files.get('json')
@@ -36,6 +39,7 @@ def folder(folder):
         return files
 
 @app.route('/file/<id>', methods = ['GET', 'DELETE', 'PUT'])
+@cross_origin()
 def get(id):
     if request.method == 'GET':
         files = drive.get(id)

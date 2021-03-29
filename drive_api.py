@@ -5,6 +5,8 @@ import io
 class DriveApi(MyDrive):
     def get_all(self, folder_name):
         parent = self.check_folder(folder_name)
+        if parent == False:
+            return 'Folder not found'
         return self.list_folder(parent)
 
     def get(self, id):
