@@ -20,7 +20,7 @@ def folder(folder):
         files = drive.get_all(folder)
         if len(files) == 0:
             return '<h1>Empty folder</h1>'
-        return files
+        return list(files)
     if request.method == 'POST':
         img = request.files.get('image')
         json = request.files.get('json')
